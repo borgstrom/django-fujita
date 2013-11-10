@@ -1,0 +1,30 @@
+<html>
+    <head>
+        <title>Fujita</title>
+    </head>
+    <body>
+        <div id='output'></div>
+        <script src='//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js'></script>
+        <script type='text/javascript'>
+            var ws = new WebSocket('ws://borgstrom.fatboxes.com:5665/log');
+            ws.onmessage = function(event) {
+                var data = JSON.parse(event.data),
+                    $output = $("#output"),
+                    $existing = $('#' + data.id, $output),
+                    $newline;
+
+                if ($existing.length > 0) {
+                    // we've already seen this message
+                    return;
+                }
+
+                $newline = $('<div>')
+                    .attr('id', data.id)
+                    .addClass('fd-' + data.fd)
+                    .append(data.line + '<br>');
+
+                $output.append($newline);
+            };
+        </script>
+    </body>
+</html>
