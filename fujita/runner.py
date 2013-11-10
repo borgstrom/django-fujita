@@ -90,8 +90,3 @@ class DjangoRunner(object):
     def handle_stderr(self, line):
         self.send_line_to_waiters(1, line)
         self.read_line(self.process.stderr, self.handle_stderr)
-
-if __name__ == '__main__':
-    main_ioloop = ioloop.IOLoop.instance()
-    runner = DjangoRunner()
-    main_ioloop.start()
