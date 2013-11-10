@@ -40,8 +40,8 @@ class DjangoRunner(object):
         # start the process and begin reading our streams
         print "Starting subprocess: %s" % command
         self.process = process.Subprocess(command, **process_kwargs)
-        self.read_until(self.process.stdout, self.handle_stdout)
-        self.read_until(self.process.stderr, self.handle_stderr)
+        self.read_line(self.process.stdout, self.handle_stdout)
+        self.read_line(self.process.stderr, self.handle_stderr)
 
         # setup an exit callback
         self.process.set_exit_callback(self.process_exit)
@@ -80,16 +80,16 @@ class DjangoRunner(object):
         if len(self.cache) > self.cache_size:
             self.cache = self.cache[-self.cache_size:]
 
-    def read_until(self, stream, callback):
+    def read_line(self, stream, callback):
         stream.read_until("\n", callback)
 
     def handle_stdout(self, line):
         self.send_line_to_waiters(0, line)
-        self.read_until(self.process.stdout, self.handle_stdout)
+        self.read_line(self.process.stdout, self.handle_stdout)
 
     def handle_stderr(self, line):
         self.send_line_to_waiters(1, line)
-        self.read_until(self.process.stderr, self.handle_stderr)
+        self.read_line(self.process.stderr, self.handle_stderr)
 
 if __name__ == '__main__':
     main_ioloop = ioloop.IOLoop.instance()
