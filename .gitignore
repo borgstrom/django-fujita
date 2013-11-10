@@ -1,0 +1,5 @@
+# vim swap files
+.*.sw*
+
+# python compiled files
+*.pyc
