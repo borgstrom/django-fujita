@@ -50,9 +50,6 @@ class DjangoRunner(object):
         self.process_kwargs = process_kwargs
         self.start()
 
-        # setup an exit callback
-        self.process.set_exit_callback(self.process_exit)
-
     def start(self):
         if not self.process:
             # start the process and begin reading our streams
@@ -61,6 +58,9 @@ class DjangoRunner(object):
             self.read_line(self.process.stdout, self.handle_stdout)
             self.read_line(self.process.stderr, self.handle_stderr)
             self.set_status(DjangoRunner.RUNNING, "Django is running")
+
+            # setup an exit callback
+            self.process.set_exit_callback(self.process_exit)
 
             # XXX TODO
             self.send_line_to_waiters(0, "Starting Django Builtin Server")
