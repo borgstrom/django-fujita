@@ -4,8 +4,9 @@ from setuptools import setup
 
 setup(name='django-fujita',
       packages=['fujita'],
+      scripts=['fujita.py'],
       include_package_data=True,
-      version='0.2',
+      version='0.3',
       license="Apache License, Version 2.0",
       description='A web based console for Django\'s development server built using Tornado',
       long_description=open('README.rst').read(),

@@ -1,3 +1,4 @@
 include README.rst
 include LICENSE
+include fujita.py
 include fujita/templates/*
