@@ -3,3 +3,7 @@
 
 # python compiled files
 *.pyc
+
+# setup stuff
+*.egg-info/
+dist/
