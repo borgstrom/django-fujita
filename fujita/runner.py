@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from tornado import ioloop, process
@@ -12,13 +13,20 @@ class DjangoRunner(object):
     specific message, the second is the file handle the message came in on (0
     for stdout, 1 for stderr) and the last is the line received.
     """
+
+    STOPPED = 0
+    RUNNING = 1
+
     def __init__(self, command, **process_kwargs):
-        print "Initializing Django Runner"
+        logging.info("Initializing Django Runner")
 
         # setup our variables used to track callbacks and manage the cache
-        self.waiters = set()
+        self.line_waiters = set()
         self.cache = []
         self.cache_size = 500
+
+        self.status_waiters = set()
+        self.set_status(DjangoRunner.STOPPED, "Initializing")
 
         # prepare the command & kwargs for the subprocess
         if isinstance(command, list):
@@ -37,35 +45,54 @@ class DjangoRunner(object):
             stderr=process.Subprocess.STREAM
         ))
 
-        # start the process and begin reading our streams
-        print "Starting subprocess: %s" % command
-        self.process = process.Subprocess(command, **process_kwargs)
-        self.read_line(self.process.stdout, self.handle_stdout)
-        self.read_line(self.process.stderr, self.handle_stderr)
+        self.process = None
+        self.process_command = command
+        self.process_kwargs = process_kwargs
+        self.start()
 
         # setup an exit callback
         self.process.set_exit_callback(self.process_exit)
 
-    def add_waiter(self, callback):
-        """
-        Start waiting for output, any lines output will be sent to the callback
-        specified.
+    def start(self):
+        if not self.process:
+            # start the process and begin reading our streams
+            logging.info("Starting subprocess: %s" % self.process_command)
+            self.process = process.Subprocess(self.process_command, **self.process_kwargs)
+            self.read_line(self.process.stdout, self.handle_stdout)
+            self.read_line(self.process.stderr, self.handle_stderr)
+            self.set_status(DjangoRunner.RUNNING, "Django is running")
 
-        If cursor is supplied any items in the cache newer than the cursor will
-        be sent to the callback.
-        """
-        print "Adding new waiter %s. Sending %d cache items" % (callback, len(self.cache))
+            # XXX TODO
+            self.send_line_to_waiters(0, "Starting Django Builtin Server")
+            self.send_line_to_waiters(0, "For some reason we never get the initial runserver output lines when we start the sub process. This is a known oddity, but your server is indeed running.")
+            self.send_line_to_waiters(0, "")
+
+    def stop(self):
+        if self.process:
+            self.process.proc.terminate()
+
+    def process_exit(self, retcode):
+        logging.info("Django exited with return code %d" % retcode)
+        self.set_status(DjangoRunner.STOPPED, "Django is not running (return code %d)" % retcode)
+        self.process = None
+
+    def set_status(self, code, status):
+        self.status = status
+        self.status_code = code
+
+        for callback in self.status_waiters:
+            callback(code, status)
+
+    def add_line_waiter(self, callback):
+        logging.debug("Adding new line_waiter %s. Sending %d cache items" % (callback, len(self.cache)))
         for id, fd, line in self.cache:
             callback(id, fd, line)
 
-        self.waiters.add(callback)
+        self.line_waiters.add(callback)
 
-    def remove_waiter(self, callback):
-        print "Removing waiter %s" % callback
-        self.waiters.remove(callback)
-
-    def process_exit(self, retcode):
-        print "Django exited with return code %d" % retcode
+    def remove_line_waiter(self, callback):
+        logging.debug("Removing line_waiter %s" % callback)
+        self.line_waiters.remove(callback)
 
     def send_line_to_waiters(self, fd, line):
         # generate an id and add it to the cache
@@ -73,7 +100,7 @@ class DjangoRunner(object):
         self.cache.append((id, fd, line))
 
         # send it to the waiters
-        for callback in self.waiters:
+        for callback in self.line_waiters:
             callback(id, fd, line)
 
         # trim cache, if necessary
@@ -90,3 +117,12 @@ class DjangoRunner(object):
     def handle_stderr(self, line):
         self.send_line_to_waiters(1, line)
         self.read_line(self.process.stderr, self.handle_stderr)
+
+    def add_status_waiter(self, callback):
+        logging.debug("Adding new status waiter %s" % callback)
+        callback(self.status_code, self.status)
+        self.status_waiters.add(callback)
+
+    def remove_status_waiter(self, callback):
+        logging.debug("Removing status waiter %s" % callback)
+        self.status_waiters.remove(callback)
