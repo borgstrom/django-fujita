@@ -7,3 +7,4 @@
 # setup stuff
 *.egg-info/
 dist/
+build/
