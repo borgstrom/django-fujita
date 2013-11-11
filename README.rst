@@ -31,7 +31,7 @@ You need to tell the script how to run your development server through the
 If you're following the steps above then you'll want to use something similar
 to the following command::
 
-  ./fujita.py --command "/home/user/.virtualenvs/fujita/bin/python /home/user/projects/django-fujita/testproject/manage.py runserver 0:8000"
+  ./scripts/fujita.py --command "/home/user/.virtualenvs/fujita/bin/python /home/user/projects/django-fujita/testproject/manage.py runserver 0:8000"
 
 The above command assumes you have a virtualenv named ``fujita`` in the
 ``.virtualenvs`` directory in your home. It also assumes that you have a
@@ -41,7 +41,7 @@ checked out there. Adjust for your setup.
 The ``command`` is run under ``/bin/sh`` so you can set environment variables
 by prefixing them in front of the command::
 
-  ./fujita.py --command "DJANGO_SETTINGS_MODULE=project.settings.dev django-admin.py runserver 0:8000"
+  ./scripts/fujita.py --command "DJANGO_SETTINGS_MODULE=project.settings.dev django-admin.py runserver 0:8000"
 
 
 .. _Django: http://djangoproject.com/
