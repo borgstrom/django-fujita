@@ -3,6 +3,8 @@ Django-Fujita
 
 This is a Tornado server built to run the Django_ builtin 'runserver' command.
 
+This uses WebSockets, so modern browsers only.
+
 Why on earth would one want to do such a crazy thing?
 -----------------------------------------------------
 The main reason this was built was for the use case of a team environment where
